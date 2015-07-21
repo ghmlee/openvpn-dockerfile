@@ -1,0 +1,32 @@
+#!/bin/bash
+## @licence MIT <http://opensource.org/licenses/MIT>
+## @author Copyright (C) 2015 Robin Schneider <ypid@riseup.net>
+
+if [ -z "$OPENVPN" ]; then
+    export OPENVPN="$PWD"
+fi
+if ! source "$OPENVPN/ovpn_env.sh"; then
+    echo "Could not source $OPENVPN/ovpn_env.sh."
+    exit 1
+fi
+
+TARGET="/tmp/openvpn_${OVPN_CN}"
+if [ -n "$1" ]; then
+    TARGET="$1"
+else
+    TARGET="$OPENVPN/server"
+fi
+
+echo "
+pki/private/${OVPN_CN}.key
+pki/issued/${OVPN_CN}.crt
+pki/dh.pem
+pki/ta.key
+pki/ca.crt
+" | rsync --recursive --verbose \
+    --files-from - \
+    "$OPENVPN/" "$TARGET"
+ln --symbolic --force ../openvpn.conf ../ovpn_env.sh "$TARGET"
+mkdir -p "$TARGET/ccd"
+
+echo "Created the openvpn configuration for the server: $TARGET"
